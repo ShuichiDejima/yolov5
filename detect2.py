@@ -1,3 +1,4 @@
+import shutil
 import argparse
 import time
 from pathlib import Path
@@ -16,7 +17,7 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 @torch.no_grad()
 def detect(opt):
-    source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
+    source, weights, view_img, save_txt, imgsz, out_label = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.out_label
     save_img = not opt.nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
@@ -144,6 +145,9 @@ def detect(opt):
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
+        src = str(save_dir) + '/labels/bus.txt'
+        copy = out_label + '/bus.txt'
+        shutil.copyfile(src,copy)
 
     print(f'Done. ({time.time() - t0:.3f}s)')
 
@@ -173,6 +177,7 @@ if __name__ == '__main__':
     parser.add_argument('--hide-labels', default=False, action='store_true', help='hide labels')
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
     parser.add_argument('--half', type=bool, default=False, help='use FP16 half-precision inference')
+    parser.add_argument('--out_label', type=str, default='data', help='label output dir') 
     opt = parser.parse_args()
     print(opt)
     check_requirements(exclude=('tensorboard', 'pycocotools', 'thop'))
