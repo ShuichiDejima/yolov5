@@ -145,9 +145,14 @@ def detect(opt):
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
-        src = str(save_dir) + '/labels/bus.txt'
-        copy = out_label + '/bus.txt'
-        shutil.copyfile(src,copy)
+        for path in dataset:
+            for i in enumerate(pred):  # detections per image
+                p = path[0]
+                p = Path(p)
+                src = str(save_dir) + '/labels/' + (p.name).replace(".jpg", ".txt")
+                copy = out_label + '/' + (p.name).replace(".jpg", ".txt")
+                shutil.copyfile(src,copy)
+                print(f"Labels saved to {copy}")
 
     print(f'Done. ({time.time() - t0:.3f}s)')
 
