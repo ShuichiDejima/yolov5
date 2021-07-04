@@ -1,3 +1,4 @@
+import os
 import shutil
 import argparse
 import time
@@ -17,10 +18,15 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 @torch.no_grad()
 def detect(opt):
-    source, weights, view_img, save_txt, imgsz, out_label = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.out_label
+    source, weights, view_img, save_txt, imgsz, out_label, ant_dat = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.out_label, opt.ant_dat
     save_img = not opt.nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
+    if opt.ant_dat == "":
+        mv_ant = False
+    else:
+        mv_ant = True
+    print("mv_ant == " + str(mv_ant) + ":  va = " + str(opt.ant_dat))
 
     # Directories
     save_dir = increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok)  # increment run
@@ -145,14 +151,30 @@ def detect(opt):
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
-        for path in dataset:
-            for i in enumerate(pred):  # detections per image
-                p = path[0]
-                p = Path(p)
-                src = str(save_dir) + '/labels/' + (p.name).replace(".jpg", ".txt")
-                copy = out_label + '/' + (p.name).replace(".jpg", ".txt")
-                shutil.copyfile(src,copy)
-                print(f"Labels saved to {copy}")
+
+        if save_txt:
+            for path in dataset:
+                for i in enumerate(pred):  # detections per image
+                    p = path[0]
+                    p = Path(p)
+                    src = str(save_dir) + '/labels/' + (p.name).replace(".jpg", ".txt")
+                    copy = out_label + '/' + (p.name).replace(".jpg", ".txt")
+                    if not os.path.exists(out_label):
+                        # ディレクトリが存在しない場合、ディレクトリを作成する
+                        os.makedirs(out_label)
+         
+                    shutil.copyfile(src,copy)
+                    print(f"Labels saved to {copy}")
+
+    if mv_ant:
+        src = str(ant_dat)
+        copy = out_label + '/' + Path(str(ant_dat)).name
+        if not os.path.exists(out_label):
+            # ディレクトリが存在しない場合、ディレクトリを作成する
+            os.makedirs(out_label)
+
+        shutil.copyfile(src,copy)
+
 
     print(f'Done. ({time.time() - t0:.3f}s)')
 
@@ -183,6 +205,7 @@ if __name__ == '__main__':
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
     parser.add_argument('--half', type=bool, default=False, help='use FP16 half-precision inference')
     parser.add_argument('--out_label', type=str, default='data', help='label output dir') 
+    parser.add_argument('--ant_dat', type=str, default='', help='annotation data') 
     opt = parser.parse_args()
     print(opt)
     check_requirements(exclude=('tensorboard', 'pycocotools', 'thop'))
