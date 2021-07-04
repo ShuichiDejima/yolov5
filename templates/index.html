@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content="device-width, initial-scale=1.0">
+    <meta http-equiv='X-UA-Compatible' content="ie=edge">
+    <title>DOG or CAT</title>
+    <link rel='stylesheet' href="./static/stylesheet.css">
+</head>
+<body>
+
+    <div class='main'>    
+        <h2> 物体検出 by Yolov5</h2>
+        <p>画像を送信してください</p>
+        <form method='POST' enctype="multipart/form-data">
+            <input class='file_choose' type="file" name="file">
+            <input class='btn' value="submit!" type="submit">
+        </form>
+        <div class='answer'>{{filen}}</div>
+    </div>
+    <img src={{org_filen}} alt="Original data"/>
+    <img src={{filen}} alt="Detecteddata"/>
+</body>
+</html>
