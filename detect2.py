@@ -18,15 +18,15 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 @torch.no_grad()
 def detect(opt):
-    source, weights, view_img, save_txt, imgsz, out_label, ant_dat = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.out_label, opt.ant_dat
+    source, weights, view_img, save_txt, imgsz, output_dir, classes_data = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.output_dir, opt.classes_data
     save_img = not opt.nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
-    if opt.ant_dat == "":
+    if classes_data == "":
         mv_ant = False
     else:
         mv_ant = True
-    print("mv_ant == " + str(mv_ant) + ":  va = " + str(opt.ant_dat))
+    print("mv_ant == " + str(mv_ant) + ":  va = " + str(classes_data))
 
     # Directories
     save_dir = increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok)  # increment run
@@ -105,6 +105,7 @@ def detect(opt):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                    print("s =   : " + s + "c == " + str(int(c)) + "  Name ==  : " + names[int(c)])   # Name against ID
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -158,26 +159,26 @@ def detect(opt):
                     p = path[0]
                     p = Path(p)
                     src = str(save_dir) + '/labels/' + (p.name).replace(".jpg", ".txt")
-                    copy = out_label + '/' + (p.name).replace(".jpg", ".txt")
-                    if not os.path.exists(out_label):
+                    copy = output_dir + '/' + (p.name).replace(".jpg", ".txt")
+                    if not os.path.exists(output_dir):
                         # ディレクトリが存在しない場合、ディレクトリを作成する
-                        os.makedirs(out_label)
+                        os.makedirs(output_dir)
          
                     shutil.copyfile(src,copy)
                     print(f"Labels saved to {copy}")
 
     if mv_ant:
-        src = str(ant_dat)
-        copy = out_label + '/' + Path(str(ant_dat)).name
-        if not os.path.exists(out_label):
+        src = str(classes_data)
+        copy = output_dir + '/' + Path(str(classes_data)).name
+        if not os.path.exists(output_dir):
             # ディレクトリが存在しない場合、ディレクトリを作成する
-            os.makedirs(out_label)
+            os.makedirs(output_dir)
 
         shutil.copyfile(src,copy)
 
 
     print(f'Done. ({time.time() - t0:.3f}s)')
-
+    return save_dir
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -204,8 +205,8 @@ if __name__ == '__main__':
     parser.add_argument('--hide-labels', default=False, action='store_true', help='hide labels')
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
     parser.add_argument('--half', type=bool, default=False, help='use FP16 half-precision inference')
-    parser.add_argument('--out_label', type=str, default='data', help='label output dir') 
-    parser.add_argument('--ant_dat', type=str, default='', help='annotation data') 
+    parser.add_argument('--output-dir', type=str, default='data', help='label output dir') 
+    parser.add_argument('--classes-data', type=str, default='', help='classes data') 
     opt = parser.parse_args()
     print(opt)
     check_requirements(exclude=('tensorboard', 'pycocotools', 'thop'))
