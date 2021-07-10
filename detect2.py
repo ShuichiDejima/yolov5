@@ -20,15 +20,10 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 @torch.no_grad()
 def detect(opt):
-    source, weights, view_img, save_txt, imgsz, output_dir, classes_data = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.output_dir, opt.classes_data
+    source, weights, view_img, save_txt, imgsz, output_dir = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, opt.output_dir
     save_img = not opt.nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
-    if classes_data == "":
-        mv_ant = False
-    else:
-        mv_ant = True
-    print("mv_ant == " + str(mv_ant) + ":  va = " + str(classes_data))
 
     # Directories
     save_dir = increment_path(Path(opt.project) / opt.name, exist_ok=opt.exist_ok)  # increment run
@@ -213,7 +208,6 @@ if __name__ == '__main__':
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
     parser.add_argument('--half', type=bool, default=False, help='use FP16 half-precision inference')
     parser.add_argument('--output-dir', type=str, default='data', help='label output dir') 
-    parser.add_argument('--classes-data', type=str, default='', help='classes data') 
     opt = parser.parse_args()
     print(opt)
     check_requirements(exclude=('tensorboard', 'pycocotools', 'thop'))
