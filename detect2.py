@@ -4,6 +4,8 @@ import argparse
 import time
 from pathlib import Path
 
+import json 
+
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
@@ -94,6 +96,8 @@ def detect(opt):
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # img.jpg
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
+            class_path = str(save_dir / 'labels' / (p.name).replace(".jpg", "_class.json"))
+
             s += '%gx%g ' % img.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if opt.save_crop else im0  # for opt.save_crop
@@ -101,11 +105,17 @@ def detect(opt):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
 
-                # Print results
-                for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-                    print("s =   : " + s + "c == " + str(int(c)) + "  Name ==  : " + names[int(c)])   # Name against ID
+                class_str = {}
+                with open(class_path, mode='a') as f:
+                    # Print results
+                    for c in det[:, -1].unique():
+                        n = (det[:, -1] == c).sum()  # detections per class
+                        s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                        print("s =   : " + s + "c == " + str(int(c)) + "  Name ==  : " + names[int(c)])   # Name against ID
+                        class_str[int(c)] = names[int(c)]
+
+                    json.dump(class_str, f, ensure_ascii=False, indent=4)
+
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -165,16 +175,13 @@ def detect(opt):
                         os.makedirs(output_dir)
          
                     shutil.copyfile(src,copy)
+
+                    class_path = str(save_dir / 'labels' / (p.name).replace(".jpg", "_class.json"))
+                    class_path_copy = output_dir + "/" + (p.name).replace(".jpg", "_class.json")
+                    shutil.copyfile(class_path, class_path_copy)
+
                     print(f"Labels saved to {copy}")
-
-    if mv_ant:
-        src = str(classes_data)
-        copy = output_dir + '/' + Path(str(classes_data)).name
-        if not os.path.exists(output_dir):
-            # ディレクトリが存在しない場合、ディレクトリを作成する
-            os.makedirs(output_dir)
-
-        shutil.copyfile(src,copy)
+                    print(f"Classes saved to {class_path_copy}")
 
 
     print(f'Done. ({time.time() - t0:.3f}s)')
